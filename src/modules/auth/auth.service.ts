@@ -1,13 +1,18 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class AuthService {
     private readonly SALT_ROUNDS = 12;
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private jwtService: JwtService,
+    ) {}
 
     // Register a new user
     async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
@@ -40,17 +45,37 @@ export class AuthService {
                     password: false
                 }
             });
-            // const tokens = await this.generateTokens(user.id, user.email, user.role);
+            const tokens = await this.generateTokens(user.id, user.email);
+
+            await this.updateRefreshToken(user.id, tokens.refreshToken);
             return {
-                accessToken: 'null',
-                refreshToken: 'null',
-                user
-            };
+                ...tokens,
+                user,
+            }
+
         } catch (error) {
-            throw new Error(`Failed to register user: ${error.message}`);
+            console.error('Error during user registration:', error);
+            throw new InternalServerErrorException('An error occurred during registration. Please try again later.');
 
         }
     }
 
     // Generate access and refresh tokens
+    private async generateTokens(userId: string, email: string): Promise<{accessToken: string, refreshToken: string }> {
+        const payload = { sub: userId, email };
+        const refreshId = randomBytes(16).toString('hex');
+        const [accessToken, refreshToken] = await Promise.all([
+            this.jwtService.signAsync(payload, { expiresIn: '15m' }),
+            this.jwtService.signAsync({ ...payload, refreshId }, { expiresIn: '7d' })
+        ]);
+        return { accessToken, refreshToken };
+    }
+
+    // update refresh token in the database
+    async updateRefreshToken(userId: string, refreshToken: string): Promise<void> {
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { refreshToken },
+        });
+    }   
 }
