@@ -3,9 +3,10 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
-import {Strategy, ExtractJwt} from "passport-jwt";
+import { Strategy, ExtractJwt } from "passport-jwt";
 import { PrismaService } from "src/prisma/prisma.service";
 import * as bcypt from 'bcrypt';
+import { Request } from "express";
 
 
 @Injectable()
@@ -49,7 +50,7 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refres
                 refreshToken: true,
             }
         });
-        
+
         if (!user || !user.refreshToken) {
             throw new UnauthorizedException('Invalid refresh token');
         }
@@ -59,7 +60,7 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refres
             throw new UnauthorizedException('Refresh token does not match');
         }
 
-        return {id: user.id, email: user.email, role: user.role};
+        return { id: user.id, email: user.email, role: user.role };
     }
 
 }
