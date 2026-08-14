@@ -5,6 +5,8 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UsersService } from './users.service';
 import { UserResponseDTO } from './dto/user-response.dto';
 import type { RequestWithUser } from 'src/common/interfaces/request-with-user.interface';
+import { Role } from '@prisma/client';
+import { Roles } from 'src/common/decoretors/roles.decoretor';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-Auth')
@@ -25,4 +27,21 @@ export class UsersController {
     async getMe(@Req() req: RequestWithUser): Promise<UserResponseDTO> {
         return this.userService.findOne(req.user.id);
     }
+
+
+    // Get all users (for admins purpose)
+    @Get()
+    @Roles(Role.ADMIN)
+    @ApiOperation({ summary: 'Get all users' })
+    @ApiResponse({
+        status: 200,
+        description: 'The list of all users',
+        type: [UserResponseDTO]
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 403, description: 'Forbidden' })
+    async findAll() {
+        return this.userService.findAll();
+    }
+
 }
