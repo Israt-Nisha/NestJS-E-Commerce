@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -42,6 +42,22 @@ export class UsersController {
     @ApiResponse({ status: 403, description: 'Forbidden' })
     async findAll() {
         return this.userService.findAll();
+    }
+
+    // Get user  by id (for admins purpose)
+    @Get(':id')
+    @Roles(Role.ADMIN)
+    @ApiOperation({ summary: 'Get user by ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'The user found by ID',
+        type: UserResponseDTO
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 403, description: 'Forbidden' })
+    @ApiResponse({ status: 404, description: 'User not found' })
+    async findOne(@Param('id') id: string): Promise<UserResponseDTO> {
+        return this.userService.findOne(id);
     }
 
 }
