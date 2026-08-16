@@ -1,5 +1,5 @@
-import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UsersService } from './users.service';
@@ -7,6 +7,7 @@ import { UserResponseDTO } from './dto/user-response.dto';
 import type { RequestWithUser } from 'src/common/interfaces/request-with-user.interface';
 import { Role } from '@prisma/client';
 import { Roles } from 'src/common/decoretors/roles.decoretor';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-Auth')
@@ -59,5 +60,24 @@ export class UsersController {
     async findOne(@Param('id') id: string): Promise<UserResponseDTO> {
         return this.userService.findOne(id);
     }
+
+    // Update user profile
+    @Patch('me')
+    @ApiOperation({ summary: 'Update current user profile' })
+    @ApiBody({
+        type: UpdateUserDto
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'The updated user profile',
+        type: UserResponseDTO
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 409, description: 'User already exists' })
+    async updateProfile(userId: string, @Body() updateUserDto: UpdateUserDto): Promise<UserResponseDTO> {
+        return this.userService.update(userId, updateUserDto);
+    }
+
+
 
 }
