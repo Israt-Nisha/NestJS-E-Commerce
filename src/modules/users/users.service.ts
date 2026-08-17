@@ -4,9 +4,12 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { UserResponseDTO } from "./dto/user-response.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
+    private readonly SALT_ROUND = 10;
     constructor(private prisma: PrismaService) { }
 
     // Get user by ID
@@ -86,6 +89,42 @@ export class UsersService {
         });
 
         return updatedUser;
+    }
+
+
+    // Update user password
+    async updatePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<{ message: string }> {
+
+        const { currentPassword, newPassword } = changePasswordDto;
+
+        const existingUser = await this.prisma.user.findUnique({
+            where: { id: userId }
+        });
+
+        if (!existingUser) {
+            throw new NotFoundException('User not found');
+        }
+
+        const isPasswordValid = await bcrypt.compare(currentPassword, existingUser.password);
+        if (!isPasswordValid) {
+            throw new NotFoundException('Invalid old password');
+        }
+
+        const isSamePassword = await bcrypt.compare(newPassword, existingUser.password);
+        if (isSamePassword) {
+            throw new NotFoundException('New password must be different from the current password');
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, this.SALT_ROUND);
+
+        const updatedUser = await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                password: hashedPassword
+            }
+        });
+
+        return { message: 'Password updated successfully' };
     }
 
 

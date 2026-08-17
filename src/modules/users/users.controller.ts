@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -8,6 +8,8 @@ import type { RequestWithUser } from 'src/common/interfaces/request-with-user.in
 import { Role } from '@prisma/client';
 import { Roles } from 'src/common/decoretors/roles.decoretor';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { GetUser } from 'src/common/decoretors/get-user.decoretor';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-Auth')
@@ -74,8 +76,30 @@ export class UsersController {
     })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     @ApiResponse({ status: 409, description: 'User already exists' })
-    async updateProfile(userId: string, @Body() updateUserDto: UpdateUserDto): Promise<UserResponseDTO> {
+    async updateProfile(
+        @GetUser('id')
+        userId: string, @Body() updateUserDto: UpdateUserDto): Promise<UserResponseDTO> {
         return this.userService.update(userId, updateUserDto);
+    }
+
+    // Update current user password
+    @Patch('me/password')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Update current user password' })
+    @ApiResponse({
+        status: 200,
+        description: 'The updated user password',
+        type: UserResponseDTO
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 409, description: 'User already exists' })
+    async updatePassword(
+        @GetUser('id')
+        userId: string, @Body() changePasswordDto: ChangePasswordDto): Promise<{ message: string }> {
+        return this.userService.updatePassword(
+            userId,
+            changePasswordDto
+        );
     }
 
 
