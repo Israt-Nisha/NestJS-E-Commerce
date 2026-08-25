@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -100,6 +100,40 @@ export class UsersController {
             userId,
             changePasswordDto
         );
+    }
+
+
+    // Delete current user
+    @Delete('me')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Delete current user' })
+    @ApiResponse({
+        status: 200,
+        description: 'The deleted user',
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    async deleteProfile(
+        @GetUser('id')
+        userId: string): Promise<{ message: string }> {
+        return this.userService.delete(userId);
+    }
+
+    // Delete user by ID (for admins purpose)
+    @Delete(':id')
+    @Roles(Role.ADMIN)
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Delete user by ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'The deleted user',
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 403, description: 'Forbidden' })
+    @ApiResponse({ status: 404, description: 'User not found' })
+    async deleteUser(
+        @Param('id')
+        userId: string): Promise<{ message: string }> {
+        return this.userService.delete(userId);
     }
 
 

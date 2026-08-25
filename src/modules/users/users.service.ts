@@ -127,5 +127,22 @@ export class UsersService {
         return { message: 'Password updated successfully' };
     }
 
+    // Soft delete user
+    async delete(userId: string): Promise<{ message: string }> {
+        const existingUser = await this.prisma.user.findUnique({
+            where: { id: userId }
+        });
+
+        if (!existingUser) {
+            throw new NotFoundException('User not found');
+        }
+
+        await this.prisma.user.delete({
+            where: { id: userId },
+        });
+
+        return { message: 'User deleted successfully' };
+    }
+
 
 }
