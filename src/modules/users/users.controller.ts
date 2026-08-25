@@ -125,7 +125,7 @@ export class UsersController {
     @ApiOperation({ summary: 'Delete user by ID' })
     @ApiResponse({
         status: 200,
-        description: 'The deleted user',
+        description: 'The deleted user with the specified ID',
     })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     @ApiResponse({ status: 403, description: 'Forbidden' })
