@@ -37,7 +37,7 @@ export class CategoryService {
             id: category.id,
             name: category.name,
             slug: category.slug,
-            description: "",
+            description: category.description,
             image: category.imageUrl,
             isActive: category.isActive,
             productsCount: productsCount,
