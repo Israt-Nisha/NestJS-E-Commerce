@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CategoryService } from './category.service';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -7,6 +7,7 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { CategoryResponseDto } from './dto/category-respons.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { Role } from '@prisma/client';
+import { QueryCategoryDto } from './dto/query-category.dto';
 
 @ApiTags('categories')
 @Controller('categories')
@@ -28,6 +29,40 @@ export class CategoryController {
     @ApiResponse({ status: 500, description: 'Internal server error' })
     async createCategory(createCategoryDto: CreateCategoryDto): Promise<CategoryResponseDto> {
         return this.categoryService.createCategory(createCategoryDto);
+    }
+
+
+    // Get all categories
+    @Get()
+    @ApiOperation({ summary: 'Get all categories' })
+    @ApiResponse({
+        status: 200, description: 'Categories retrieved successfully',
+        schema: {
+            type: 'object',
+            properties: {
+                data: {
+                    type: 'array',
+                    items: {
+                        $ref: "#/components/schemas/CategoryResponseDto"
+                    }
+                }
+                ,
+                meta: {
+                    type: 'object',
+                    properties: {
+                        total: { type: 'number' },
+                        page: { type: 'number' },
+                        limit: { type: 'number' },
+
+                        totalPages: { type: 'number' },
+                    }
+                }
+
+            },
+        }
+    })
+    async findAll(@Query() queryDto: QueryCategoryDto) {
+        return this.categoryService.findAll(queryDto);
     }
 
 }

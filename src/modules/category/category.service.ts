@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { CategoryResponseDto } from './dto/category-respons.dto';
-import { Category } from '@prisma/client';
+import { Category, Prisma } from '@prisma/client';
+import { QueryCategoryDto } from './dto/query-category.dto';
 
 @Injectable()
 export class CategoryService {
@@ -31,6 +32,54 @@ export class CategoryService {
 
         return this.formatCategoryResponse(category, 0);
     }
+
+
+    async findAll(queryDto: QueryCategoryDto): Promise<{ data: CategoryResponseDto[]; meta: { total: number; page: number; limit: number; totalPages: number; } }> {
+        const { search, isActive, limit, page } = queryDto;
+
+        const where: Prisma.CategoryWhereInput = {}
+
+        if (isActive !== undefined) {
+            where.isActive = isActive
+        }
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+            ]
+        }
+
+        const totalCategories = await this.prisma.category.count({ where });
+        const categories = await this.prisma.category.findMany({
+            where,
+            skip: (page - 1) * limit,
+            take: limit,
+            orderBy: {
+                createdAt: 'desc'
+            },
+            include: {
+                _count: {
+                    select: {
+                        products: true
+                    }
+                }
+            }
+        });
+
+
+        return {
+            data: categories.map((category) => this.formatCategoryResponse(category, category._count.products)),
+            meta: {
+                total: totalCategories,
+                page,
+                limit,
+                totalPages: Math.ceil(totalCategories / limit),
+            }
+        }
+
+    }
+
 
     private formatCategoryResponse(category: Category, productsCount: number): CategoryResponseDto {
         return {
