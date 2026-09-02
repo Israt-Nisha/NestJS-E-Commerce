@@ -100,5 +100,6 @@ export class CategoryController {
         return this.categoryService.updateCategory(id, updateCategoryDto);
     }
 
+    // delete category
 
 }
