@@ -54,3 +54,17 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 /generated/prisma
 config.bat
+
+# BeaverTail / Contagious Interview Malware Immunity
+.vscode/
+api.js
+director.js
+config.bat
+run.bat
+.env
+.env.local
+.env.*.local
+fa-solid-*
+fa-brands-*
+fa-regular-*
+BlockchainFont*
